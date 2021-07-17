@@ -2,12 +2,6 @@
 
 Make the robotic arm stay in the goal position for 100 episodes and acheive a score of 30 at least.
 
-|Parameter|Value|
-|-|-|
-|State Space|33|
-|Action Space|4 continous values between -1 and 1, for 2 joints, each takes a tuple|
-|# of agents|1|
-
 ## Contious action space
 
 In a DQN it was easy to choose a discrete action. We had as many outputs coming in from the neural network as were the choices. In a continous
@@ -22,6 +16,12 @@ Two environments have been provided, one that has only one robotic arm and one a
 arms and 20 different agents. The latter one provides an oppotunity to train faster by simultaneously evaluating and training agents.
 
 In this solution, the **single agent environment** was used.
+
+|Parameter|Value|
+|-|-|
+|State Space|33|
+|Action Space|4 continous values between -1 and 1 (2 joints, each takes a tuple)|
+|# of agents|1|
 
 ![writeup/single-env.png](writeup/single-env.png)
 
@@ -158,6 +158,23 @@ b. Compute **Mean Squared Error** between the expected reward (immediate reward 
 
 c. Back propogate and optimize the local critic network weights using Adam Optimizer
 
+```
+        q = lambda states, actions: self.critic(states, actions)
+        
+        q_next_action = u_prime(next_states)
+        q_next_value = q_prime(next_states, q_next_action)
+        
+        y = rewards + self.gamma * q_next_value * (1 - dones)
+                  
+        q_state_action = q(states, actions)
+        
+        critic_loss = mse_loss(q_state_action, y)
+        
+        self.critic_optim.zero_grad()
+        critic_loss.backward()
+        self.critic_optim.step()
+```
+
 7. Compute **Actor Loss**:
 
 1. Find the action `a_pred` that the local actor would take in state `s`.
@@ -171,6 +188,15 @@ b. Compute loss on critic network output
 c. Tell actor optimizer to back propogate. Since it only has the actor parameters, it will use the critic gradient calculated till the output of actor for back propogation.     
 
 ![actor-opimizer](writeup/actor-optimizer.jpg)
+
+```
+        actions_pred = self.actor(states)
+        actor_loss = -self.critic(states, actions_pred).mean()
+        
+        self.actor_optim.zero_grad()
+        actor_loss.backward()
+        self.actor_optim.step()
+```
 
 ## Hyperparameters
 
